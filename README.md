@@ -20,6 +20,7 @@ infrastructure workflows.
 | --- | --- | --- | --- |
 | Day 01 | Terraform and AWS fundamentals | Configure the AWS provider and create tagged S3 buckets. | [`day-01/README.md`](./day-01/README.md) |
 | Day 02 | S3 management and state | Create an S3 bucket, enable versioning, constrain versions, and configure an S3 backend. | [`day-02/README.md`](./day-02/README.md) |
+| Day 03 | EC2, variables, locals, and outputs | Launch an EC2 instance using variables, `.tfvars`, local values, and output values. | [`day-03/README.md`](./day-03/README.md) |
 
 ## Repository Structure
 
@@ -34,6 +35,14 @@ terraform-practice/
 │   ├── provider.tf
 │   ├── version.tf
 │   └── README.md
+├── day-03/
+│   ├── main.tf
+│   ├── provider.tf
+│   ├── variables.tf
+│   ├── terraform.tfvars
+│   ├── locals.tf
+│   ├── output.tf
+│   └── README.md
 └── README.md
 ```
 
@@ -46,7 +55,7 @@ protection for local Terraform artifacts.
 Run Terraform from the directory for the exercise being completed:
 
 ```bash
-cd day-02
+cd day-03
 terraform init
 terraform fmt
 terraform validate
@@ -120,6 +129,28 @@ Day 02 extends the first exercise with:
 
 The detailed [Day 02 hands-on](./day-02/README.md) explains the configuration,
 prerequisites, verification checklist, and cleanup process.
+
+## Day 03: EC2, Variables, Locals, and Outputs
+
+Day 03 provisions an EC2 instance and builds on the previous exercises with:
+
+- An `aws_instance` resource in `ap-south-1`.
+- Input variables for region, instance type, environment, and project name.
+- `terraform.tfvars` setting the current instance type to `["t2.large"]`.
+- Local values for the instance ID, ARN, private IP, and public IP.
+- Terraform outputs exposing those local values.
+
+### Problems and solutions
+
+| Problem | Solution |
+| --- | --- |
+| EC2 AMIs are region-specific and architecture-specific. | Verify that the AMI in `main.tf` exists in `ap-south-1` and supports the selected instance type. |
+| Hard-coded EC2 settings are difficult to reuse. | Define input variables in `variables.tf` and reference them from the resource. |
+| Values in `.tfvars` must match their declared types. | Keep `instance_type = ["t2.large"]` as a list because the variable uses `list(string)`. |
+| Resource attributes are needed after creation. | Define locals and outputs for the instance ID, ARN, private IP, and public IP. |
+| Running instances can incur AWS charges. | Verify the outputs, then run `terraform destroy` when the lab is complete. |
+
+See the detailed [Day 03 hands-on](./day-03/README.md).
 
 ## Backend Note
 

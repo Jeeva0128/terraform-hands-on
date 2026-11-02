@@ -1,1 +1,1 @@
-instance_type = "t4g.micro"
+instance_type = ["t2.large"]

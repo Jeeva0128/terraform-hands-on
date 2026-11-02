@@ -13,7 +13,7 @@ values.
 - Use `terraform.tfvars` to provide environment-specific values.
 - Create local values from resource attributes.
 - Print the instance ID, ARN, private IP, and public IP as Terraform outputs.
-- Identify and correct type mismatches before applying infrastructure.
+- Validate variable types and AMI/instance compatibility before applying.
 
 ## Files
 
@@ -94,27 +94,18 @@ is required.
 The current [`terraform.tfvars`](./terraform.tfvars) contains:
 
 ```hcl
-instance_type = "t4g.micro"
+instance_type = ["t2.large"]
 ```
 
-This conflicts with the declaration `type = list(string)`, and it also does
-not match the AMI architecture unless the AMI supports ARM-based instances.
-Terraform should be validated before apply.
+This matches the declaration `type = list(string)`. The resource selects
+`"t2.large"` with `var.instance_type[0]`.
 
-Use one of these consistent approaches:
-
-**Option A: keep the list design**
-
-```hcl
-instance_type = ["t2.micro"]
-```
-
-**Option B: use a scalar instance type**
+If only one instance type is required, a scalar variable is also possible:
 
 ```hcl
 variable "instance_type" {
   type    = string
-  default = "t2.micro"
+  default = "t2.large"
 }
 ```
 
@@ -124,9 +115,9 @@ Then update the resource to remove list indexing:
 instance_type = var.instance_type
 ```
 
-For a beginner-friendly single-instance exercise, Option B is usually clearer.
-If `t4g.micro` is selected, confirm that the AMI is ARM-compatible; otherwise
-choose an instance type compatible with the AMI.
+The current exercise keeps the list-based design to demonstrate list indexing.
+The selected `t2.large` is x86-based, so the AMI architecture should still be
+checked before provisioning.
 
 ### Locals and outputs
 
@@ -159,8 +150,7 @@ therefore be inspected after `terraform apply`.
 | --- | --- |
 | An EC2 instance needs a region-specific image. | Use an AMI available in `ap-south-1` and verify its architecture matches the selected instance type. |
 | Values hard-coded in resources are difficult to reuse. | Declare input variables and reference them from `main.tf`. |
-| `terraform.tfvars` provides a string while `instance_type` expects a list. | Make the value a list or change the variable to `string` and remove `[0]` from the resource. |
-| The `t4g.micro` value may require an ARM-compatible AMI. | Confirm the AMI architecture before applying, or select a compatible instance type such as `t2.micro`. |
+| The instance type is supplied from a separate variable file. | Keep `terraform.tfvars` compatible with `type = list(string)`; the current value is `["t2.large"]`. |
 | Resource attributes are needed in several places. | Define locals from `aws_instance.my_instance` attributes and reuse the locals. |
 | Users need important instance details after deployment. | Declare outputs for the instance ID, ARN, private IP, and public IP. |
 | Cloud resources can continue generating charges after testing. | Run `terraform destroy` after verification. |
@@ -191,8 +181,8 @@ The important order is:
 6. `terraform output` displays the generated values.
 7. `terraform destroy` removes the test instance.
 
-Do not run `apply` until the `instance_type` type mismatch and AMI/architecture
-compatibility have been resolved.
+Before `apply`, confirm that the AMI exists in `ap-south-1` and is compatible
+with the selected `t2.large` instance type.
 
 ## Verification Checklist
 
@@ -208,7 +198,8 @@ After applying the corrected configuration, verify that:
 ## Key Learnings
 
 - Variables make Terraform configurations reusable.
-- Variable types must match values supplied through `.tfvars`.
+- Variable types must match values supplied through `.tfvars`; the current
+  value is a list containing `t2.large`.
 - Locals provide readable names for derived values.
 - Outputs expose resource information for users and automation.
 - AMI architecture and region must match the EC2 instance configuration.
