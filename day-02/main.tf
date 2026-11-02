@@ -1,5 +1,5 @@
-resource "aws_s3_bucket" "example" {
-  bucket = "my-tf-test-bucket11-jeevanandan"
+resource "aws_s3_bucket" "my_bucket" {
+  bucket = "my-unique-bucket-name-jeevaram"
 
   tags = {
     Name        = "My bucket"
@@ -7,11 +7,10 @@ resource "aws_s3_bucket" "example" {
   }
 }
 
-resource "aws_s3_bucket" "example2" {
-  bucket = "my-tf-test-bucket12-jeevanandan"
+resource "aws_s3_bucket_versioning" "my_bucket_versioning" {
+  bucket = aws_s3_bucket.my_bucket.id
 
-  tags = {
-    Name        = "My updated bucket"
-    Environment = "Dev"
+  versioning_configuration {
+    status = "Enabled"
   }
 }
