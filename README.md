@@ -1,9 +1,8 @@
 # Terraform Hands-on Practice
 
-This repository contains a day-by-day Terraform learning project. Each
-directory is an independent hands-on exercise that builds practical knowledge
-of Terraform, the AWS provider, resource management, state, and repeatable
-infrastructure workflows.
+This repository contains independent Terraform and AWS hands-on exercises.
+Each directory focuses on a core Terraform concept such as providers,
+resources, variables, and meta-arguments.
 
 ## Project Goals
 
@@ -16,30 +15,38 @@ infrastructure workflows.
 
 ## Hands-on Progress
 
-| Day | Main topic | AWS/Terraform work | Documentation |
+| Exercise | Main topic | AWS/Terraform work | Documentation |
 | --- | --- | --- | --- |
-| Day 01 | Terraform and AWS fundamentals | Configure the AWS provider and create tagged S3 buckets. | [`day-01/README.md`](./day-01/README.md) |
-| Day 02 | S3 management and state | Create an S3 bucket, enable versioning, constrain versions, and configure an S3 backend. | [`day-02/README.md`](./day-02/README.md) |
-| Day 03 | EC2, variables, locals, and outputs | Launch an EC2 instance using variables, `.tfvars`, local values, and output values. | [`day-03/README.md`](./day-03/README.md) |
+| `provider-plugin` | AWS provider and S3 resources | Configure the AWS provider and create two tagged S3 buckets. | [`provider-plugin/README.md`](./provider-plugin/README.md) |
+| `reource-practice` | S3 versioning and remote state | Create a versioned S3 bucket and configure an encrypted S3 backend. | [`reource-practice/README.md`](./reource-practice/README.md) |
+| `variables-tf` | EC2, variables, locals, and outputs | Launch an EC2 instance using variables, `.tfvars`, local values, and outputs. | [`variables-tf/README.md`](./variables-tf/README.md) |
+| `meta-arguments` | `count` meta-argument | Create multiple S3 buckets from one resource block using a suffix list. | [`meta-arguments/README.md`](./meta-arguments/README.md) |
 
 ## Repository Structure
 
 ```text
 terraform-practice/
-├── day-01/
+├── provider-plugin/
 │   ├── main.tf
 │   ├── provider.tf
 │   └── README.md
-├── day-02/
+├── reource-practice/
 │   ├── main.tf
 │   ├── provider.tf
 │   ├── version.tf
 │   └── README.md
-├── day-03/
+├── variables-tf/
 │   ├── main.tf
 │   ├── provider.tf
 │   ├── variables.tf
 │   ├── terraform.tfvars
+│   ├── locals.tf
+│   ├── output.tf
+│   └── README.md
+├── meta-arguments/
+│   ├── main.tf
+│   ├── provider.tf
+│   ├── variables.tf
 │   ├── locals.tf
 │   ├── output.tf
 │   └── README.md
@@ -55,7 +62,7 @@ protection for local Terraform artifacts.
 Run Terraform from the directory for the exercise being completed:
 
 ```bash
-cd day-03
+cd meta-arguments
 terraform init
 terraform fmt
 terraform validate
@@ -88,9 +95,9 @@ The workflow is:
 Never commit AWS credentials or secrets to this repository. Use an AWS CLI
 profile, environment variables, or another supported credential mechanism.
 
-## Day 01: Provider and S3 Fundamentals
+## Provider and S3 Fundamentals
 
-Day 01 introduces the basic Terraform structure:
+The `provider-plugin` exercise introduces the basic Terraform structure:
 
 - `provider.tf` selects the HashiCorp AWS provider and `ap-south-1`.
 - `main.tf` declares tagged `aws_s3_bucket` resources.
@@ -102,11 +109,11 @@ configuration. The solution is to describe the desired S3 buckets in
 declarative Terraform resource blocks, then use `plan`, `apply`, and `destroy`
 to manage their lifecycle.
 
-See the detailed [Day 01 hands-on](./day-01/README.md).
+See the detailed [provider and S3 hands-on](./provider-plugin/README.md).
 
-## Day 02: Versioning and Remote State
+## S3 Versioning and Remote State
 
-Day 02 extends the first exercise with:
+The `reource-practice` exercise extends the first exercise with:
 
 - Terraform CLI requirement: `>= 1.10.0`.
 - AWS provider constraint: `~> 6.57`.
@@ -119,7 +126,7 @@ Day 02 extends the first exercise with:
 
 | Problem | Solution |
 | --- | --- |
-| Different Terraform CLI versions can produce inconsistent results. | Set `required_version` in [`version.tf`](./day-02/version.tf). |
+| Different Terraform CLI versions can produce inconsistent results. | Set `required_version` in [`version.tf`](./reource-practice/version.tf). |
 | Provider behavior and documentation vary by version. | Constrain the AWS provider and keep the lock file. |
 | S3 bucket names are globally unique. | Use a project-specific suffix and change it when a name is unavailable. |
 | Important bucket objects can be overwritten or deleted accidentally. | Enable S3 versioning with `aws_s3_bucket_versioning`. |
@@ -127,12 +134,13 @@ Day 02 extends the first exercise with:
 | Concurrent changes can corrupt or overwrite state. | Enable backend locking with `use_lockfile = true`. |
 | Secrets can leak through source control. | Use the configured AWS profile instead of hard-coded credentials. |
 
-The detailed [Day 02 hands-on](./day-02/README.md) explains the configuration,
+The detailed [S3 versioning hands-on](./reource-practice/README.md) explains the configuration,
 prerequisites, verification checklist, and cleanup process.
 
-## Day 03: EC2, Variables, Locals, and Outputs
+## EC2, Variables, Locals, and Outputs
 
-Day 03 provisions an EC2 instance and builds on the previous exercises with:
+The `variables-tf` exercise provisions an EC2 instance and builds on the
+previous exercises with:
 
 - An `aws_instance` resource in `ap-south-1`.
 - Input variables for region, instance type, environment, and project name.
@@ -150,11 +158,29 @@ Day 03 provisions an EC2 instance and builds on the previous exercises with:
 | Resource attributes are needed after creation. | Define locals and outputs for the instance ID, ARN, private IP, and public IP. |
 | Running instances can incur AWS charges. | Verify the outputs, then run `terraform destroy` when the lab is complete. |
 
-See the detailed [Day 03 hands-on](./day-03/README.md).
+See the detailed [EC2 hands-on](./variables-tf/README.md).
+
+## Meta-arguments with `count`
+
+The [`meta-arguments`](./meta-arguments/README.md) exercise uses Terraform's
+`count` meta-argument to create one S3 bucket per suffix in a list. It also
+demonstrates indexed resource addresses, list access through `count.index`,
+and the difference between a quoted string and an evaluated Terraform
+expression in a local value.
+
+### Problems and solutions
+
+| Problem | Solution |
+| --- | --- |
+| Several similar buckets would require repeated resource blocks. | Use `count = length(var.bucket_name_suffix)` and `count.index`. |
+| Bucket names may collide globally. | Use a project-specific base name and verify generated names before applying. |
+| An output can print an expression as text instead of evaluating it. | Leave Terraform references unquoted and use the exact resource name, `my_bucket`. |
+
+See the detailed [meta-arguments hands-on](./meta-arguments/README.md).
 
 ## Backend Note
 
-The current Day 02 backend configuration uses:
+The current S3 versioning exercise backend configuration uses:
 
 ```hcl
 bucket = "terraform-state-lab-2026-random123"
@@ -162,12 +188,12 @@ key    = "day04/terraform.tfstate"
 region = "ap-south-1"
 ```
 
-Before initializing Day 02, confirm that the backend bucket is owned by and
-accessible to you. If this exercise should use a Day 02-specific state path,
-change the key to:
+Before initializing [`reource-practice`](./reource-practice/), confirm that the
+backend bucket is owned by and accessible to you. If this exercise should use
+an exercise-specific state path, change the key to:
 
 ```hcl
-key = "day02/terraform.tfstate"
+key = "reource-practice/terraform.tfstate"
 ```
 
 Do not destroy a shared backend bucket when cleaning up an individual
