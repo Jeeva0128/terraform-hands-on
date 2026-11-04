@@ -1,0 +1,11 @@
+# Terraform working directories and provider binaries
+**/.terraform/
+
+# Terraform state and lock files
+**/*.tfstate
+**/*.tfstate.*
+**/.terraform.tfstate.lock.info
+
+# Local variable files may contain environment-specific values or secrets
+**/*.tfvars
+!**/*.tfvars.example
