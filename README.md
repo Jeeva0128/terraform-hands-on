@@ -21,6 +21,7 @@ resources, variables, and meta-arguments.
 | `reource-practice` | S3 versioning and remote state | Create a versioned S3 bucket and configure an encrypted S3 backend. | [`reource-practice/README.md`](./reource-practice/README.md) |
 | `variables-tf` | EC2, variables, locals, and outputs | Launch an EC2 instance using variables, `.tfvars`, local values, and outputs. | [`variables-tf/README.md`](./variables-tf/README.md) |
 | `meta-arguments` | `count` meta-argument | Create multiple S3 buckets from one resource block using a suffix list. | [`meta-arguments/README.md`](./meta-arguments/README.md) |
+| `Dynamic-conditional expression` | Dynamic and conditional configuration | Configure EC2 CPU options from list and map variables, with a dynamic-block extension example. | [`Dynamic-conditional expression/README.md`](./Dynamic-conditional%20expression/README.md) |
 
 ## Repository Structure
 
@@ -47,6 +48,14 @@ terraform-practice/
 │   ├── main.tf
 │   ├── provider.tf
 │   ├── variables.tf
+│   ├── locals.tf
+│   ├── output.tf
+│   └── README.md
+├── Dynamic-conditional expression/
+│   ├── main.tf
+│   ├── provider.tf
+│   ├── variable.tf
+│   ├── terraform.tfvars
 │   ├── locals.tf
 │   ├── output.tf
 │   └── README.md
@@ -177,6 +186,25 @@ expression in a local value.
 | An output can print an expression as text instead of evaluating it. | Leave Terraform references unquoted and use the exact resource name, `my_bucket`. |
 
 See the detailed [meta-arguments hands-on](./meta-arguments/README.md).
+
+## Dynamic and Conditional Configuration
+
+The [`Dynamic-conditional expression`](./Dynamic-conditional%20expression/README.md)
+exercise provisions an EC2 instance using a list-based instance type and a
+map-based CPU configuration. It introduces the data structures commonly used
+to drive nested Terraform settings and includes an example of how a
+conditional `dynamic` block could make `cpu_options` optional.
+
+### Problems and solutions
+
+| Problem | Solution |
+| --- | --- |
+| Resource settings should be reusable instead of hard-coded. | Define the AMI, instance type, and CPU settings as variables. |
+| Related CPU settings need to be passed together. | Store `core_count` and `threads_per_core` in a typed map. |
+| A nested block may need to be optional in a future version. | Use a conditional expression with `dynamic` and `for_each` to create zero or one block. |
+| AMIs and CPU settings are resource-specific. | Verify region, architecture, instance type, and CPU compatibility before applying. |
+
+See the detailed [dynamic and conditional hands-on](./Dynamic-conditional%20expression/README.md).
 
 ## Backend Note
 
