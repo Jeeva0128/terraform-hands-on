@@ -1,29 +1,27 @@
 # Terraform Hands-on Practice
 
-This repository contains independent Terraform and AWS hands-on exercises.
-Each directory focuses on a core Terraform concept such as providers,
-resources, variables, and meta-arguments.
+This repository contains independent Terraform exercises for learning AWS
+infrastructure as code. Each directory is a separate Terraform root module
+with its own provider configuration, state, lock file, and documentation.
 
-## Project Goals
+The exercises progress from basic AWS resources to variables, remote state,
+meta-arguments, data sources, and dynamic nested blocks. They are learning
+examples rather than production-ready infrastructure modules.
 
-- Learn Terraform configuration using real AWS resources.
-- Understand providers, resources, attributes, tags, and dependencies.
-- Practice the Terraform lifecycle from initialization to cleanup.
-- Introduce provider and Terraform version constraints.
-- Use remote, encrypted state and state locking.
-- Record the problems encountered during each hands-on and their solutions.
+## Learning path
 
-## Hands-on Progress
-
-| Exercise | Main topic | AWS/Terraform work | Documentation |
+| Exercise | Main topic | What it demonstrates | Documentation |
 | --- | --- | --- | --- |
-| `provider-plugin` | AWS provider and S3 resources | Configure the AWS provider and create two tagged S3 buckets. | [`provider-plugin/README.md`](./provider-plugin/README.md) |
-| `reource-practice` | S3 versioning and remote state | Create a versioned S3 bucket and configure an encrypted S3 backend. | [`reource-practice/README.md`](./reource-practice/README.md) |
-| `variables-tf` | EC2, variables, locals, and outputs | Launch an EC2 instance using variables, `.tfvars`, local values, and outputs. | [`variables-tf/README.md`](./variables-tf/README.md) |
-| `meta-arguments` | `count` meta-argument | Create multiple S3 buckets from one resource block using a suffix list. | [`meta-arguments/README.md`](./meta-arguments/README.md) |
-| `Dynamic-conditional expression` | Dynamic and conditional configuration | Configure EC2 CPU options from list and map variables, with a dynamic-block extension example. | [`Dynamic-conditional expression/README.md`](./Dynamic-conditional%20expression/README.md) |
+| [`provider-plugin/`](./provider-plugin/) | AWS provider and S3 resources | Configure the AWS provider and create two tagged S3 buckets. | [`README.md`](./provider-plugin/README.md) |
+| [`reource-practice/`](./reource-practice/) | S3 versioning and remote state | Create a versioned S3 bucket and configure an encrypted S3 backend with native locking. | [`README.md`](./reource-practice/README.md) |
+| [`variables-tf/`](./variables-tf/) | EC2, variables, locals, and outputs | Launch an EC2 instance using typed variables, `.tfvars`, locals, and outputs. | [`README.md`](./variables-tf/README.md) |
+| [`meta-arguments/`](./meta-arguments/) | `count` | Create multiple S3 buckets from one resource block and use indexed addresses. | [`README.md`](./meta-arguments/README.md) |
+| [`Dynamic-conditional expression/`](./Dynamic-conditional%20expression/) | Dynamic nested blocks and data sources | Generate security-group ingress blocks from a typed rule list and inspect existing VPCs. | [`README.md`](./Dynamic-conditional%20expression/README.md) |
 
-## Repository Structure
+> The directory name `reource-practice` is retained from the repository and is
+> intentionally not renamed by the documentation.
+
+## Repository structure
 
 ```text
 terraform-practice/
@@ -48,190 +46,237 @@ terraform-practice/
 │   ├── main.tf
 │   ├── provider.tf
 │   ├── variables.tf
+│   ├── terraform.tfvars
 │   ├── locals.tf
 │   ├── output.tf
 │   └── README.md
 ├── Dynamic-conditional expression/
 │   ├── main.tf
 │   ├── provider.tf
-│   ├── variable.tf
+│   ├── variables.tf
 │   ├── terraform.tfvars
-│   ├── locals.tf
-│   ├── output.tf
+│   ├── data.tf
+│   ├── outputs.tf
 │   └── README.md
 └── README.md
 ```
 
-Terraform state, provider plugins, and other generated files should remain
-outside source control. The repository `.gitignore` files provide the initial
-protection for local Terraform artifacts.
+Terraform loads all `.tf` files in a module; filenames do not control
+evaluation order. This repository uses names such as `provider.tf` and
+`version.tf` to organize configuration, but some modules place the version
+constraint and provider block in different files.
 
-## Terraform Hands-on Workflow
+Generated state, provider packages, and local Terraform directories should not
+be committed. The module `.gitignore` files and the repository ignore rules
+provide the initial protection for local artifacts.
 
-Run Terraform from the directory for the exercise being completed:
+## Prerequisites
+
+- Terraform CLI `1.10.0` or newer for the modules that declare that minimum.
+- An AWS account with permission to create, inspect, and delete the lab
+  resources.
+- AWS CLI credentials configured through the `terraform-dev` profile or
+  another supported credential mechanism.
+- Access to the AWS `ap-south-1` region.
+- Globally unique names for S3 buckets.
+
+The `provider-plugin` module currently constrains the AWS provider to the
+`~> 6` family but does not declare a Terraform CLI minimum. The other modules
+use the AWS provider constraint `~> 6.57` and declare
+`required_version = ">= 1.10.0"`.
+
+Never commit AWS credentials, access keys, private keys, or other secrets.
+
+## Common workflow
+
+Run Terraform from one exercise directory at a time. Do not initialize or
+apply from the repository root because the root has no Terraform module.
 
 ```bash
-cd meta-arguments
+cd <exercise-directory>
 terraform init
 terraform fmt
 terraform validate
 terraform plan
 terraform apply
+terraform output
 terraform state list
-terraform show
 terraform destroy
 ```
 
-The workflow is:
+Use the following sequence:
 
-1. **Configure** - Write `.tf` files for the desired infrastructure.
-2. **Initialize** - Install the required provider and configure the backend.
-3. **Format and validate** - Check style and configuration correctness.
-4. **Plan** - Review the proposed changes before modifying AWS.
-5. **Apply** - Create or update the resources.
-6. **Verify** - Confirm the resources and settings in AWS.
-7. **Inspect state** - Confirm which resources Terraform manages.
-8. **Destroy** - Remove temporary resources after the lab.
+1. **Initialize** - Install the required provider and configure any backend.
+2. **Format** - Apply Terraform's canonical formatting.
+3. **Validate** - Check syntax, types, and references locally.
+4. **Plan** - Review the proposed infrastructure changes.
+5. **Apply** - Create or update resources only after reviewing the plan.
+6. **Verify** - Inspect outputs, state, and the AWS console or CLI.
+7. **Destroy** - Remove temporary resources after the exercise.
 
-## Shared Prerequisites
+`terraform validate` does not prove that AWS credentials, permissions,
+availability zones, AMIs, VPC IDs, bucket names, or quotas are correct. Those
+conditions are checked during `plan` and `apply`.
 
-- Terraform `1.10.0` or newer.
-- An AWS account with permission to create and delete the lab resources.
-- AWS CLI configured with the `terraform-dev` profile.
-- Access to the `ap-south-1` AWS region.
-- Globally unique S3 bucket names.
+## Exercise details
 
-Never commit AWS credentials or secrets to this repository. Use an AWS CLI
-profile, environment variables, or another supported credential mechanism.
+### 1. AWS provider and S3 resources
 
-## Provider and S3 Fundamentals
+[`provider-plugin/`](./provider-plugin/) is the introductory exercise. It
+declares two `aws_s3_bucket` resources with tags and uses the AWS provider in
+`ap-south-1`.
 
-The `provider-plugin` exercise introduces the basic Terraform structure:
+Key lessons:
 
-- `provider.tf` selects the HashiCorp AWS provider and `ap-south-1`.
-- `main.tf` declares tagged `aws_s3_bucket` resources.
-- The local resource name is used inside Terraform, while the `bucket`
-  attribute is the globally unique AWS bucket name.
+- A provider connects Terraform to AWS.
+- The Terraform resource name is a local reference, not the S3 bucket name.
+- S3 bucket names are globally unique.
+- Provider documentation must match the configured provider family.
 
-The main problem is turning a manual AWS resource into repeatable
-configuration. The solution is to describe the desired S3 buckets in
-declarative Terraform resource blocks, then use `plan`, `apply`, and `destroy`
-to manage their lifecycle.
+Before applying, confirm that both bucket names are available and that the
+configured AWS profile can create and delete S3 buckets.
 
-See the detailed [provider and S3 hands-on](./provider-plugin/README.md).
+### 2. S3 versioning and remote state
 
-## S3 Versioning and Remote State
+[`reource-practice/`](./reource-practice/) creates one tagged S3 bucket and
+enables versioning through `aws_s3_bucket_versioning`. Its `version.tf`
+configures an encrypted S3 backend with `use_lockfile = true`.
 
-The `reource-practice` exercise extends the first exercise with:
-
-- Terraform CLI requirement: `>= 1.10.0`.
-- AWS provider constraint: `~> 6.57`.
-- One tagged S3 bucket.
-- S3 bucket versioning enabled through
-  `aws_s3_bucket_versioning`.
-- An encrypted S3 backend with native lock-file locking.
-
-### Problems and solutions
-
-| Problem | Solution |
-| --- | --- |
-| Different Terraform CLI versions can produce inconsistent results. | Set `required_version` in [`version.tf`](./reource-practice/version.tf). |
-| Provider behavior and documentation vary by version. | Constrain the AWS provider and keep the lock file. |
-| S3 bucket names are globally unique. | Use a project-specific suffix and change it when a name is unavailable. |
-| Important bucket objects can be overwritten or deleted accidentally. | Enable S3 versioning with `aws_s3_bucket_versioning`. |
-| Local state is difficult to share and recover. | Store state in an encrypted S3 backend. |
-| Concurrent changes can corrupt or overwrite state. | Enable backend locking with `use_lockfile = true`. |
-| Secrets can leak through source control. | Use the configured AWS profile instead of hard-coded credentials. |
-
-The detailed [S3 versioning hands-on](./reource-practice/README.md) explains the configuration,
-prerequisites, verification checklist, and cleanup process.
-
-## EC2, Variables, Locals, and Outputs
-
-The `variables-tf` exercise provisions an EC2 instance and builds on the
-previous exercises with:
-
-- An `aws_instance` resource in `ap-south-1`.
-- Input variables for region, instance type, environment, and project name.
-- `terraform.tfvars` setting the current instance type to `["t2.large"]`.
-- Local values for the instance ID, ARN, private IP, and public IP.
-- Terraform outputs exposing those local values.
-
-### Problems and solutions
-
-| Problem | Solution |
-| --- | --- |
-| EC2 AMIs are region-specific and architecture-specific. | Verify that the AMI in `main.tf` exists in `ap-south-1` and supports the selected instance type. |
-| Hard-coded EC2 settings are difficult to reuse. | Define input variables in `variables.tf` and reference them from the resource. |
-| Values in `.tfvars` must match their declared types. | Keep `instance_type = ["t2.large"]` as a list because the variable uses `list(string)`. |
-| Resource attributes are needed after creation. | Define locals and outputs for the instance ID, ARN, private IP, and public IP. |
-| Running instances can incur AWS charges. | Verify the outputs, then run `terraform destroy` when the lab is complete. |
-
-See the detailed [EC2 hands-on](./variables-tf/README.md).
-
-## Meta-arguments with `count`
-
-The [`meta-arguments`](./meta-arguments/README.md) exercise uses Terraform's
-`count` meta-argument to create one S3 bucket per suffix in a list. It also
-demonstrates indexed resource addresses, list access through `count.index`,
-and the difference between a quoted string and an evaluated Terraform
-expression in a local value.
-
-### Problems and solutions
-
-| Problem | Solution |
-| --- | --- |
-| Several similar buckets would require repeated resource blocks. | Use `count = length(var.bucket_name_suffix)` and `count.index`. |
-| Bucket names may collide globally. | Use a project-specific base name and verify generated names before applying. |
-| An output can print an expression as text instead of evaluating it. | Leave Terraform references unquoted and use the exact resource name, `my_bucket`. |
-
-See the detailed [meta-arguments hands-on](./meta-arguments/README.md).
-
-## Dynamic and Conditional Configuration
-
-The [`Dynamic-conditional expression`](./Dynamic-conditional%20expression/README.md)
-exercise provisions an EC2 instance using a list-based instance type and a
-map-based CPU configuration. It introduces the data structures commonly used
-to drive nested Terraform settings and includes an example of how a
-conditional `dynamic` block could make `cpu_options` optional.
-
-### Problems and solutions
-
-| Problem | Solution |
-| --- | --- |
-| Resource settings should be reusable instead of hard-coded. | Define the AMI, instance type, and CPU settings as variables. |
-| Related CPU settings need to be passed together. | Store `core_count` and `threads_per_core` in a typed map. |
-| A nested block may need to be optional in a future version. | Use a conditional expression with `dynamic` and `for_each` to create zero or one block. |
-| AMIs and CPU settings are resource-specific. | Verify region, architecture, instance type, and CPU compatibility before applying. |
-
-See the detailed [dynamic and conditional hands-on](./Dynamic-conditional%20expression/README.md).
-
-## Backend Note
-
-The current S3 versioning exercise backend configuration uses:
+The backend currently uses:
 
 ```hcl
-bucket = "terraform-state-lab-2026-random123"
-key    = "day04/terraform.tfstate"
-region = "ap-south-1"
+bucket       = "terraform-state-lab-2026-random123"
+key          = "day04/terraform.tfstate"
+region       = "ap-south-1"
+encrypt      = true
+use_lockfile = true
 ```
 
-Before initializing [`reource-practice`](./reource-practice/), confirm that the
-backend bucket is owned by and accessible to you. If this exercise should use
-an exercise-specific state path, change the key to:
+The backend bucket must already exist, belong to the operator, and be
+accessible with the configured AWS profile. The `day04` key is a repository
+configuration detail, not a guarantee about the exercise's sequence. Change
+the key before initialization if a separate state path is required. Never
+destroy a shared backend bucket as part of cleaning up this exercise.
+
+### 3. EC2, variables, locals, and outputs
+
+[`variables-tf/`](./variables-tf/) creates an `aws_instance` using:
+
+- AMI `ami-0912f71e06545ad88`.
+- The first value in the `instance_type` list.
+- The first value in the `environment` list.
+- The `project_name` string for the `Name` tag.
+- Values supplied through `terraform.tfvars`.
+
+The current variables file sets `instance_type = ["t2.large"]`. The AMI is
+region- and architecture-specific, so verify that it exists in `ap-south-1`
+and supports the selected instance type before applying.
+
+The module also defines locals and outputs for the instance ID, ARN, private
+IP, and public IP. Its `region` variable is currently declared but not used by
+the provider, which is configured directly for `ap-south-1`. The list-based
+instance type and environment variables demonstrate indexing; scalar strings
+would be simpler if only one value were ever needed.
+
+EC2 instances can incur charges. Destroy the instance after verification.
+
+### 4. `count` meta-argument
+
+[`meta-arguments/`](./meta-arguments/) creates one S3 bucket for each suffix in
+`var.bucket_name_suffix`:
 
 ```hcl
-key = "reource-practice/terraform.tfstate"
+count = length(var.bucket_name_suffix)
+bucket = "${var.bucket_name}-${var.bucket_name_suffix[count.index]}"
 ```
 
-Do not destroy a shared backend bucket when cleaning up an individual
-exercise.
+The default suffix list contains five values, so the expected resource
+addresses are:
 
-## Key Learnings
+```text
+aws_s3_bucket.my_bucket[0]
+aws_s3_bucket.my_bucket[1]
+aws_s3_bucket.my_bucket[2]
+aws_s3_bucket.my_bucket[3]
+aws_s3_bucket.my_bucket[4]
+```
 
-- Terraform files describe desired state instead of imperative steps.
-- Providers connect Terraform to platforms such as AWS.
+The exercise also records a common mistake: Terraform expressions must not be
+quoted when they should be evaluated. The current local/output example
+intentionally documents the correction from a quoted expression and an
+incorrect resource name to `aws_s3_bucket.my_bucket[*].id`.
+
+### 5. Dynamic blocks and VPC data sources
+
+[`Dynamic-conditional expression/`](./Dynamic-conditional%20expression/) creates
+an `aws_security_group` and generates one nested `ingress` block per object in
+`var.ingress_rules`:
+
+```hcl
+dynamic "ingress" {
+  for_each = var.ingress_rules
+
+  content {
+    from_port   = ingress.value.from_port
+    to_port     = ingress.value.to_port
+    protocol    = ingress.value.protocol
+    cidr_blocks = ingress.value.cidr_blocks
+  }
+}
+```
+
+The module's `data.tf` lists all VPCs in the configured region and exposes
+their IDs, CIDR blocks, default status, and tags through `existing_vpcs`.
+Those data sources do not select a VPC for the security group.
+
+Before applying:
+
+- Replace the placeholder `vpc_id` in `main.tf` with a real, deliberately
+  selected VPC ID, or add an explicit selection rule.
+- Verify the `/32` source address in `terraform.tfvars`.
+- Review whether the default egress behavior is appropriate.
+- Treat the current configuration as a dynamic-block example; it does not
+  currently conditionally omit the entire ingress block.
+
+## Known issues and safety checks
+
+| Area | Current condition | Required check |
+| --- | --- | --- |
+| Backend | The S3 backend uses a pre-existing bucket and a `day04` state key. | Confirm ownership, permissions, and the intended state path before `terraform init`. |
+| S3 naming | Several exercises use fixed bucket names. | Change names if they are already taken globally. |
+| EC2 AMI | The AMI is hard-coded and region-specific. | Verify availability and architecture in `ap-south-1`. |
+| EC2 region variable | `variables-tf` declares `region`, but the provider uses a literal region. | Do not assume changing the variable changes the provider region. |
+| Security group VPC | The dynamic-block module contains a placeholder VPC ID. | Replace or explicitly derive the ID before planning. |
+| Network access | The dynamic-block module opens ports 22, 80, and 443 to one configured `/32`. | Confirm the source IP and keep ingress ranges narrow. |
+| State and cost | Applying creates real AWS resources and state. | Review plans, protect remote state, and destroy temporary resources. |
+
+## Useful verification commands
+
+From an exercise directory:
+
+```bash
+terraform fmt -check
+terraform validate
+terraform plan
+terraform state list
+terraform show
+terraform output
+```
+
+For the remote-state exercise, verify the backend key before running
+`terraform init`. For all exercises, inspect the plan for unexpected
+resources, addresses, regions, and network exposure.
+
+## Key learnings
+
+- Terraform describes desired state declaratively.
+- Providers, resources, data sources, variables, locals, and outputs have
+  different roles.
 - Resource references create dependencies automatically.
-- Version constraints improve repeatability.
-- Remote state and locking support safe team workflows.
-- Temporary cloud resources should be verified and destroyed after practice.
+- `count` creates indexed resource instances, while `dynamic` creates nested
+  blocks.
+- Typed variables make repeated configuration predictable.
+- Version constraints and lock files improve repeatability.
+- Remote state and locking support safer collaboration.
+- Planning, verification, and cleanup are essential when practicing against
+  real cloud accounts.
