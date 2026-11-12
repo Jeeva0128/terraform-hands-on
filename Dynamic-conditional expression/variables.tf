@@ -1,5 +1,8 @@
-variable "sg_input" {
-  from_port = 22
-  to _port = 80
-  http = 443 
+variable "ingress_rules" {
+  type = list(object({
+    from_port   = number
+    to_port     = number
+    protocol    = string
+    cidr_blocks = list(string)
+  }))
 }
